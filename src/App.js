@@ -9,7 +9,7 @@ function App() {
         <div className="App">
             <BrowserRouter>
                 <Routes>
-                    <Route index element={<Profile />} />
+                    <Route index element={<Signup />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/profile" element={<Profile />} />
