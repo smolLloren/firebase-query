@@ -1,0 +1,157 @@
+.inbox-page {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.inbox-page .main-content {
+    margin: 20px;
+    border: 1px solid gray;
+    border-radius: 10px;
+    min-width: 800px;
+    width: 60%;
+    height: 600px;
+    padding: 30px 40px;
+    display: flex;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+    gap: 20px;
+    position: relative;
+}
+
+.inbox-page .main-content .chat-list {
+    border: 1px solid gray;
+    border-radius: 10px;
+    height: 100%;
+    padding: 20px;
+    width: 250px;
+    position: relative;
+}
+
+.inbox-page .main-content .chat-list input {
+    border-radius: 5px;
+    border: 1px solid gray;
+    padding: 5px 10px;
+    width: 100%;
+    font-size: 12px;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.inbox-page .main-content .chat-list .searchbar-results {
+    box-shadow: 0px 2px 4px rgba(7, 2, 2, 0.2);
+    border-radius: 5px;
+    padding: 10px 15px;
+    font-size: 12px;
+    position: absolute;
+    width: calc(100% - 40px);
+    z-index: 500;
+    height: auto;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: white;
+}
+
+.inbox-page .main-content .chat-list .searchbar-results .user-result {
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.inbox-page .main-content .chat-list .searchbar-results .user-result:hover {
+    background-color: rgb(231, 231, 231);
+}
+
+.inbox-page .main-content .chat-list .user-list {
+    height: calc(100% - 40px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+.inbox-page .main-content .chat-list .user-list .users {
+    font-weight: 500;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.inbox-page .main-content .chat-list .user-list .users:hover {
+    background-color: rgb(231, 231, 231);
+}
+
+.inbox-page .main-content .messenger {
+    border: 1px solid gray;
+    border-radius: 5px;
+    flex: 1;
+    padding: 30px 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+.inbox-page .main-content .messenger .username {
+    font-weight: 500;
+}
+
+.inbox-page .main-content .messenger .chat-box {
+    border: 1px solid gray;
+    border-radius: 5px;
+    padding: 20px 30px;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.inbox-page .main-content .messenger .chat-box .chat {
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    width: auto;
+    max-width: 200px;
+    font-size: 12px;
+    padding: 5px 10px;
+    align-self: flex-end;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.inbox-page .main-content .messenger .chat-box .chat.cht2 {
+    align-self: flex-start;
+}
+
+.inbox-page .main-content .messenger .chat-box .chat .time-sent {
+    position: absolute;
+    font-size: 8px;
+    right: 2px;
+    bottom: -15px;
+}
+
+.inbox-page .main-content .messenger textarea {
+    margin-top: 10px;
+    resize: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 12;
+    overflow-y: auto;
+    height: 80px;
+}
+
+.inbox-page .main-content .messenger button {
+    width: 100%;
+    border: 1px solid gray;
+    background-color: rgb(31, 31, 31);
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-weight: 400;
+    color: white;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.inbox-page .main-content .messenger button:hover {
+    background-color: rgb(53, 53, 53);
+}
