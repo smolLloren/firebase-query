@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../config/firebase"; 
+import { db } from "../config/firebase";
 import "../styles/Login.css";
 
 function Login() {
@@ -26,8 +26,8 @@ function Login() {
 
             if (docSnap.exists()) {
                 const userData = docSnap.data();
-                navigate("/profile", {
-                    state: { email: user.email, password, ...userData },
+                navigate("/inbox", {
+                    state: { uid: user.uid, email: user.email, ...userData },
                 });
             } else {
                 console.error("No such document!");
@@ -55,7 +55,9 @@ function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                 />
-                <button type="submit" onClick={handleLogin}>Login</button>
+                <button type="submit" onClick={handleLogin}>
+                    Login
+                </button>
             </div>
         </div>
     );
