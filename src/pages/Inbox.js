@@ -4,120 +4,130 @@ import {
     collection,
     query,
     where,
+    orderBy,
     getDocs,
-    getDoc,
+    addDoc,
+    Timestamp,
+    onSnapshot,
     doc,
+    getDoc,
 } from "firebase/firestore";
 import { useLocation } from "react-router-dom";
 import "../styles/inbox.css";
 
 function Inbox() {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [searchResults, setSearchResults] = useState([]);
-    const [isSearchActive, setIsSearchActive] = useState(false);
-    const [conversationUsers, setConversationUsers] = useState([]);
     const location = useLocation();
-    const { uid } = location.state;
+    const loggedInUserID = location.state.uid;
+    const [uniqueUserIDs, setUniqueUserIDs] = useState(new Set());
+    const [userList, setUserList] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [messageInput, setMessageInput] = useState(""); // State for message input
 
     useEffect(() => {
-        console.log("Logged-in user UID:", uid); // Debugging console log
-
         const fetchConversations = async () => {
-            try {
-                const q = query(
-                    collection(db, "conversations"),
-                    where("end-user", "==", uid)
-                );
-                const querySnapshot = await getDocs(q);
-                const userMessages = new Map(); // Map to hold UIDs and their messages
+            const q1 = query(
+                collection(db, "conversations"),
+                where("senderID", "==", loggedInUserID)
+            );
+            const q2 = query(
+                collection(db, "conversations"),
+                where("receiverID", "==", loggedInUserID)
+            );
 
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const senderUid = doc.id; // Document ID is the sender's UID
-                    const message = data["message"];
+            const [senderQuerySnapshot, receiverQuerySnapshot] =
+                await Promise.all([getDocs(q1), getDocs(q2)]);
 
-                    // Add message to the corresponding sender
-                    if (!userMessages.has(senderUid)) {
-                        userMessages.set(senderUid, []);
-                    }
-                    userMessages.get(senderUid).push(message);
-                });
+            const userIDs = new Set();
 
-                console.log("Sender UIDs and Messages:");
-                userMessages.forEach(async (messages, senderUid) => {
-                    // Fetch user data for each sender
-                    try {
-                        const userDoc = await getDoc(
-                            doc(db, "users", senderUid)
-                        );
-                        if (userDoc.exists()) {
-                            const userData = userDoc.data();
-                            console.log(
-                                `UID: ${senderUid}, First Name: ${
-                                    userData.firstName
-                                }, Last Name: ${
-                                    userData.lastName
-                                }, Messages: ${messages.join(", ")}`
-                            );
-                        } else {
-                            console.log(
-                                `UID: ${senderUid} not found in users collection.`
-                            );
-                        }
-                    } catch (error) {
-                        console.error("Error fetching user data: ", error);
-                    }
-                });
+            senderQuerySnapshot.forEach((doc) => {
+                userIDs.add(doc.data().receiverID);
+            });
+            receiverQuerySnapshot.forEach((doc) => {
+                userIDs.add(doc.data().senderID);
+            });
 
-                // Fetch user data for each sender and update state
-                const userPromises = [...userMessages.keys()].map(
-                    async (id) => {
-                        const userDoc = await getDoc(doc(db, "users", id));
-                        return userDoc.data();
-                    }
-                );
-
-                const users = await Promise.all(userPromises);
-                setConversationUsers(users);
-            } catch (error) {
-                console.error("Error fetching conversations: ", error);
-            }
+            setUniqueUserIDs(userIDs);
         };
 
-        if (uid) {
-            fetchConversations();
-        }
-    }, [uid]);
+        fetchConversations();
+    }, [loggedInUserID]);
 
     useEffect(() => {
-        if (searchQuery.trim() === "") {
-            setSearchResults([]);
-            return;
-        }
-
         const fetchUsers = async () => {
-            try {
-                const q = query(collection(db, "users"));
-                const querySnapshot = await getDocs(q);
-                const results = [];
-
-                querySnapshot.forEach((doc) => {
-                    const userData = doc.data();
-                    const fullName =
-                        `${userData.firstName} ${userData.lastName}`.toLowerCase();
-                    if (fullName.includes(searchQuery.toLowerCase())) {
-                        results.push(userData);
+            const userPromises = Array.from(uniqueUserIDs).map(
+                async (userID) => {
+                    const userDoc = await getDoc(doc(db, "users", userID));
+                    if (userDoc.exists()) {
+                        return { id: userID, ...userDoc.data() };
+                    } else {
+                        console.error("No such user document!");
+                        return null;
                     }
-                });
+                }
+            );
 
-                setSearchResults(results);
-            } catch (error) {
-                console.error("Error fetching users: ", error);
-            }
+            const users = await Promise.all(userPromises);
+            setUserList(users.filter((user) => user !== null));
         };
 
-        fetchUsers();
-    }, [searchQuery]);
+        if (uniqueUserIDs.size > 0) {
+            fetchUsers();
+        }
+    }, [uniqueUserIDs]);
+
+    useEffect(() => {
+        if (selectedUser) {
+            const q1 = query(
+                collection(db, "conversations"),
+                where("senderID", "in", [loggedInUserID, selectedUser.id]),
+                where("receiverID", "in", [loggedInUserID, selectedUser.id]),
+                orderBy("msgTimestamp", "asc")
+            );
+
+            const unsubscribe = onSnapshot(q1, (querySnapshot) => {
+                const messages = querySnapshot.docs.map((doc) => ({
+                    ...doc.data(),
+                    id: doc.id,
+                }));
+                setMessages(messages);
+            });
+
+            return () => unsubscribe(); // Clean up the subscription on unmount
+        }
+    }, [selectedUser]);
+
+    const handleUserClick = async (user) => {
+        setSelectedUser(user);
+    };
+
+    const handleMessageInputChange = (event) => {
+        setMessageInput(event.target.value);
+    };
+
+    const handleSendMessage = async () => {
+        if (messageInput.trim() === "" || !selectedUser) return;
+
+        try {
+            await addDoc(collection(db, "conversations"), {
+                senderID: loggedInUserID,
+                receiverID: selectedUser.id,
+                message: messageInput,
+                msgTimestamp: Timestamp.fromDate(new Date()),
+            });
+
+            setMessageInput(""); // Clear input field after sending
+        } catch (error) {
+            console.error("Error sending message: ", error);
+        }
+    };
+
+    const formatTime = (timestamp) => {
+        return new Date(timestamp.toDate()).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
 
     return (
         <div className="inbox-page">
@@ -128,47 +138,51 @@ function Inbox() {
                         type="text"
                         className="search-bar"
                         placeholder="Search a user"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => setIsSearchActive(true)}
-                        onBlur={() => setIsSearchActive(false)}
                     />
-                    {isSearchActive &&
-                        searchQuery.trim() &&
-                        searchResults.length > 0 && (
-                            <div className="searchbar-results">
-                                {searchResults.map((user, index) => (
-                                    <p key={index} className="user-result">
-                                        {user.firstName} {user.lastName}
-                                    </p>
-                                ))}
-                            </div>
-                        )}
                     <div className="user-list">
-                        {conversationUsers.map((user, index) => (
-                            <p key={index} className="users">
-                                {user.firstName} {user.lastName}
+                        {userList.map((user) => (
+                            <p
+                                className="users"
+                                key={user.id}
+                                onClick={() => handleUserClick(user)}
+                            >
+                                {`${user.firstName} ${user.lastName}`}
                             </p>
                         ))}
                     </div>
                 </div>
                 <div className="messenger">
-                    <p className="username">Username</p>
+                    <p className="username">
+                        {selectedUser
+                            ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                            : "Username"}
+                    </p>
                     <div className="chat-box">
-                        <div className="chat">
-                            <p className="message">Hello, Good Morning</p>
-                            <p className="time-sent">10:00 am</p>
-                        </div>
-                        <div className="chat cht2">
-                            <p className="message">Whatsuppp</p>
-                            <p className="time-sent">10:05 am</p>
-                        </div>
+                        {messages.map((message) => (
+                            <div
+                                className="chat"
+                                key={message.id}
+                                style={{
+                                    alignSelf:
+                                        message.senderID === loggedInUserID
+                                            ? "flex-end"
+                                            : "flex-start",
+                                }}
+                            >
+                                <p className="message">{message.message}</p>
+                                <p className="time-sent">
+                                    {formatTime(message.msgTimestamp)}
+                                </p>
+                            </div>
+                        ))}
                     </div>
                     <textarea
                         className="message-box"
+                        value={messageInput}
+                        onChange={handleMessageInputChange}
                         placeholder="Type your message here..."
                     ></textarea>
-                    <button>Send Message</button>
+                    <button onClick={handleSendMessage}>Send Message</button>
                 </div>
             </div>
         </div>

@@ -27,7 +27,12 @@ function Login() {
             if (docSnap.exists()) {
                 const userData = docSnap.data();
                 navigate("/inbox", {
-                    state: { uid: user.uid, email: user.email, ...userData },
+                    state: {
+                        uid: user.uid,
+                        email: user.email,
+                        password,
+                        ...userData,
+                    },
                 });
             } else {
                 console.error("No such document!");
