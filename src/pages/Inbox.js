@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { db } from "../config/firebase";
 import {
     collection,
@@ -23,6 +23,8 @@ function Inbox() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [messages, setMessages] = useState([]);
     const [messageInput, setMessageInput] = useState(""); // State for message input
+
+    const chatBoxRef = useRef(null); // Create a ref for the chat-box
 
     useEffect(() => {
         const fetchConversations = async () => {
@@ -97,6 +99,13 @@ function Inbox() {
         }
     }, [selectedUser]);
 
+    // Scroll to the bottom whenever messages change
+    useEffect(() => {
+        if (chatBoxRef.current) {
+            chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+        }
+    }, [messages]);
+
     const handleUserClick = async (user) => {
         setSelectedUser(user);
     };
@@ -157,7 +166,7 @@ function Inbox() {
                             ? `${selectedUser.firstName} ${selectedUser.lastName}`
                             : "Username"}
                     </p>
-                    <div className="chat-box">
+                    <div className="chat-box" ref={chatBoxRef}>
                         {messages.map((message) => (
                             <div
                                 className="chat"

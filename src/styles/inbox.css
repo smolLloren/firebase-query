@@ -12,7 +12,7 @@
     border-radius: 10px;
     min-width: 800px;
     width: 60%;
-    height: 600px;
+    height: 500px;
     padding: 30px 40px;
     display: flex;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
@@ -83,6 +83,8 @@
 .inbox-page .main-content .chat-list .user-list .users:hover {
     background-color: rgb(231, 231, 231);
 }
+
+
 
 .inbox-page .main-content .messenger {
     border: 1px solid gray;
